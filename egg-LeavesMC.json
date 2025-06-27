@@ -2,13 +2,13 @@
     "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
     "meta": {
         "version": "PLCN_v1",
-        "update_url": "https://raw.githubusercontent.com/redstonerthebest/LeavesMC_egg/main/egg-LeavesMC.json"
+        "update_url": ""
     },
     "exported_at": "2025-06-23T17:01:04+00:00",
-    "name": "Leaves",
+    "name": "LeavesMC",
     "author": "lennard@allosmp.de",
     "uuid": "5da37ef6-58da-4169-90a6-e683e1721247",
-    "description": "LeavesMC is a high-performance Minecraft server software. Supports Minecraft versions 1.16.5 and above.",
+    "description": "LeavesMC Minecraft server software",
     "tags": [
         "minecraft"
     ],
@@ -17,11 +17,10 @@
         "java_version"
     ],
     "docker_images": {
-        "Java 21": "eclipse-temurin:21-jre",
-        "Java 17": "eclipse-temurin:17-jre"
+        "Java 21": "eclipse-temurin:21-jre"
     },
     "file_denylist": [],
-    "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -XX:MaxRAMPercentage=80.0 -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
+    "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
     "config": {
         "files": {
             "server.properties": {
@@ -34,7 +33,7 @@
             }
         },
         "startup": {
-            "done": "Done \\([0-9.]+s\\)! For help, type"
+            "done": "Done"
         },
         "logs": {},
         "stop": "stop"
@@ -47,33 +46,6 @@
         }
     },
     "variables": [
-        {
-            "sort": 4,
-            "name": "Build Number",
-            "description": "The build number for the paper release. Leave at latest to always get the latest version.",
-            "env_variable": "BUILD_NUMBER",
-            "default_value": "latest",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": [
-                "required",
-                "string",
-                "max:20"
-            ]
-        },
-        {
-            "sort": 3,
-            "name": "Download Path",
-            "description": "A URL to use to download a server.jar rather than the ones in the install script. Leave empty to use default download.",
-            "env_variable": "DL_PATH",
-            "default_value": "",
-            "user_viewable": false,
-            "user_editable": false,
-            "rules": [
-                "optional",
-                "string"
-            ]
-        },
         {
             "sort": 1,
             "name": "Minecraft Version",
@@ -100,6 +72,33 @@
                 "required",
                 "string",
                 "max:100"
+            ]
+        },
+        {
+            "sort": 3,
+            "name": "Download Path",
+            "description": "A URL to use to download a server.jar rather than the ones in the install script. Leave empty to use default download.",
+            "env_variable": "DL_PATH",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": [
+                "optional",
+                "string"
+            ]
+        },
+        {
+            "sort": 4,
+            "name": "Build Number",
+            "description": "The build number for the paper release. Leave at latest to always get the latest version.",
+            "env_variable": "BUILD_NUMBER",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:20"
             ]
         }
     ]
