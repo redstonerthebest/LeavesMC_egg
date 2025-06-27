@@ -2,13 +2,13 @@
     "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
     "meta": {
         "version": "PLCN_v1",
-        "update_url": "https://raw.githubusercontent.com/redstonerthebest/LeavesMC_egg/refs/heads/main/egg-LeavesMC.json"
+        "update_url": "https://raw.githubusercontent.com/redstonerthebest/LeavesMC_egg/main/egg-LeavesMC.json"
     },
     "exported_at": "2025-06-23T17:01:04+00:00",
     "name": "Leaves",
     "author": "lennard@allosmp.de",
     "uuid": "5da37ef6-58da-4169-90a6-e683e1721247",
-    "description": "LeavesMC improves Minecraft’s ecosystem with fast, secure and stable software available, providing quick releases and helpful support as the most maverick.",
+    "description": "LeavesMC is a high-performance Minecraft server software, providing fast, secure, and stable operation with quick releases and dedicated support. Supports Minecraft versions 1.16.5 and above.",
     "tags": [
         "minecraft"
     ],
@@ -19,13 +19,10 @@
     ],
     "docker_images": {
         "Java 21": "ghcr.io/parkervcp/yolks:java_21",
-        "Java 17": "ghcr.io/parkervcp/yolks:java_17",
-        "Java 16": "ghcr.io/parkervcp/yolks:java_16",
-        "Java 11": "ghcr.io/parkervcp/yolks:java_11",
-        "Java 8": "ghcr.io/parkervcp/yolks:java_8"
+        "Java 17": "ghcr.io/parkervcp/yolks:java_17"
     },
     "file_denylist": [],
-    "startup": "java -Xms128M -XX:MaxRAMPercentage=95.0 -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
+    "startup": "java -Xms128M -Xmx{{SERVER_MEMORY}}M -XX:MaxRAMPercentage=80.0 -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
     "config": {
         "files": {
             "server.properties": {
@@ -38,14 +35,14 @@
             }
         },
         "startup": {
-            "done": "Done (.*?s)! For help, type"
+            "done": "Done \\([0-9.]+s\\)! For help, type"
         },
         "logs": {},
         "stop": "stop"
     },
     "scripts": {
         "installation": {
-            "script": "#!/bin/ash\n# Leaves Installation Script\n#\n# Server Files: /mnt/server\nPROJECT=LeavesMC\n\nif [ -n \"${DL_PATH}\" ]; then\n\techo -e \"Using supplied download url: ${DL_PATH}\"\n\tDOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's/{{/$\\{/g' -e 's/}}/}/g')`\nelse\n\tVER_EXISTS=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT} | jq -r --arg VERSION $MINECRAFT_VERSION '.versions[] | contains($VERSION)' | grep -m1 true`\n\tLATEST_VERSION=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT} | jq -r '.versions' | jq -r '.[-1]'`\n\n\tif [ \"${VER_EXISTS}\" == \"true\" ]; then\n\t\techo -e \"Version is valid. Using version ${MINECRAFT_VERSION}\"\n\telse\n\t\techo -e \"Specified version not found. Defaulting to the latest ${PROJECT} version\"\n\t\tMINECRAFT_VERSION=${LATEST_VERSION}\n\tfi\n\n\tBUILD_EXISTS=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r --arg BUILD ${BUILD_NUMBER} '.builds[] | tostring | contains($BUILD)' | grep -m1 true`\n\tLATEST_BUILD=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r '.builds' | jq -r '.[-1]'`\n\n\tif [ \"${BUILD_EXISTS}\" == \"true\" ]; then\n\t\techo -e \"Build is valid for version ${MINECRAFT_VERSION}. Using build ${BUILD_NUMBER}\"\n\telse\n\t\techo -e \"Using the latest ${PROJECT} build for version ${MINECRAFT_VERSION}\"\n\t\tBUILD_NUMBER=${LATEST_BUILD}\n\tfi\n\n\tJAR_NAME=${PROJECT}-${MINECRAFT_VERSION}-${BUILD_NUMBER}.jar\n\n\techo \"Version being downloaded\"\n\techo -e \"MC Version: ${MINECRAFT_VERSION}\"\n\techo -e \"Build: ${BUILD_NUMBER}\"\n\techo -e \"JAR Name of Build: ${JAR_NAME}\"\n\tDOWNLOAD_URL=https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER}/downloads/${JAR_NAME}\nfi\n\ncd /mnt/server\n\nif curl -o ${SERVER_JARFILE} ${DOWNLOAD_URL}; then\n\techo -e \"Successfully downloaded ${SERVER_JARFILE}\"\nelse\n\techo -e \"Failed to download ${SERVER_JARFILE}\"\n\texit 1\nfi\n\nif [ -f ${SERVER_JARFILE} ]; then\n\tmv ${SERVER_JARFILE} ${SERVER_JARFILE}.old\nfi\n\nif [ ! -f server.properties ]; then\n    echo -e \"Downloading MC server.properties\"\n    if curl -o server.properties https://raw.githubusercontent.com/parkervcp/eggs/master/minecraft/java/server.properties; then\n        echo -e \"server.properties successfully downloaded\"\n    else\n        echo -e \"Failed to download server.properties\"\n        exit 1\n    fi\nfi",
+            "script": "#!/bin/ash\n# Leaves Installation Script\n# Server Files: /mnt/server\nPROJECT=LeavesMC\n\n# Überprüfen, ob jq installiert ist\nif ! command -v jq >/dev/null 2>&1; then\n    echo -e \"Fehler: jq ist nicht installiert. Bitte installieren Sie jq im Container.\"\n    exit 1\nfi\n\n# Überprüfen, ob die API erreichbar ist\nAPI_URL=\"https://api.leavesmc.org/v2/projects/${PROJECT}\"\nif ! curl -s -f \"${API_URL}\" >/dev/null; then\n    echo -e \"Fehler: API unter ${API_URL} ist nicht erreichbar.\"\n    exit 1\nfi\n\nif [ -n \"${DL_PATH}\" ]; then\n    echo -e \"Using supplied download url: ${DL_PATH}\"\n    DOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's/{{/$\\{/g' -e 's/}}/}/g')`\nelse\n    VER_EXISTS=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT} | jq -r --arg VERSION $MINECRAFT_VERSION '.versions[] | contains($VERSION)' | grep -m1 true`\n    LATEST_VERSION=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT} | jq -r '.versions' | jq -r '.[-1]'`\n\n    if [ \"${VER_EXISTS}\" == \"true\" ]; then\n        echo -e \"Version is valid. Using version ${MINECRAFT_VERSION}\"\n    else\n        echo -e \"Specified version not found. Defaulting to the latest ${PROJECT} version\"\n        MINECRAFT_VERSION=${LATEST_VERSION}\n    fi\n\n    BUILD_EXISTS=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r --arg BUILD ${BUILD_NUMBER} '.builds[] | tostring | contains($BUILD)' | grep -m1 true`\n    LATEST_BUILD=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r '.builds' | jq -r '.[-1]'`\n\n    if [ \"${BUILD_EXISTS}\" == \"true\" ]; then\n        echo -e \"Build is valid for version ${MINECRAFT_VERSION}. Using build ${BUILD_NUMBER}\"\n    else\n        echo -e \"Using the latest ${PROJECT} build for version ${MINECRAFT_VERSION}\"\n        BUILD_NUMBER=${LATEST_BUILD}\n    fi\n\n    JAR_NAME=${PROJECT}-${MINECRAFT_VERSION}-${BUILD_NUMBER}.jar\n    DOWNLOAD_URL=https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER}/downloads/${JAR_NAME}\nfi\n\ncd /mnt/server\n\n# Server-JAR herunterladen und validieren\nif curl -s -o ${SERVER_JARFILE} ${DOWNLOAD_URL} && [ -s ${SERVER_JARFILE} ]; then\n    echo -e \"Successfully downloaded ${SERVER_JARFILE}\"\nelse\n    echo -e \"Fehler: Konnte ${SERVER_JARFILE} nicht herunterladen oder Datei ist leer\"\n    exit 1\nfi\n\n# Alte JAR-Datei sichern\nif [ -f ${SERVER_JARFILE} ]; then\n    mv ${SERVER_JARFILE} ${SERVER_JARFILE}.old\nfi\n\n# Server.properties herunterladen, falls nicht vorhanden\nif [ ! -f server.properties ]; then\n    echo -e \"Downloading MC server.properties\"\n    PROP_URL=\"https://raw.githubusercontent.com/parkervcp/eggs/master/minecraft/java/server.properties\"\n    if curl -s -f -o server.properties ${PROP_URL} && [ -s server.properties ]; then\n        echo -e \"server.properties successfully downloaded\"\n    else\n        echo -e \"Fehler: Konnte server.properties nicht herunterladen oder Datei ist leer\"\n        exit 1\n    fi\nfi",
             "container": "ghcr.io/parkervcp/installers:alpine",
             "entrypoint": "ash"
         }
@@ -68,28 +65,30 @@
         {
             "sort": 3,
             "name": "Download Path",
-            "description": "A URL to use to download a server.jar rather than the ones in the install script. This is not user viewable.",
+            "description": "A URL to use to download a server.jar rather than the ones in the install script. Leave empty to use default download.",
             "env_variable": "DL_PATH",
             "default_value": "",
             "user_viewable": false,
             "user_editable": false,
             "rules": [
-                "nullable",
-                "string"
+                "optional",
+                "string",
+                "url"
             ]
         },
         {
             "sort": 1,
             "name": "Minecraft Version",
-            "description": "The version of minecraft to download. Leave at latest to always get the latest version. Invalid versions will default to latest.",
+            "description": "The version of Minecraft to download. Leave at latest to always get the latest version. Invalid versions will default to latest.",
             "env_variable": "MINECRAFT_VERSION",
             "default_value": "latest",
             "user_viewable": true,
             "user_editable": true,
             "rules": [
-                "nullable",
+                "required",
                 "string",
-                "max:20"
+                "max:20",
+                "regex:^([0-9]+\\.[0-9]+(\\.[0-9]+)?|latest)$"
             ]
         },
         {
@@ -102,7 +101,7 @@
             "user_editable": true,
             "rules": [
                 "required",
-                "regex:^([\\w\\d._-]+)(\\.jar)$"
+                "regex:^([a-zA-Z0-9_-]+)\\.jar$"
             ]
         }
     ]
