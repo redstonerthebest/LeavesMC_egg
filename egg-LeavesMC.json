@@ -1,0 +1,109 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
+    "meta": {
+        "version": "PLCN_v1",
+        "update_url": "https://github.com/redstonerthebest/LeavesMC_egg/new/main/egg-LeavesMC.json"
+    },
+    "exported_at": "2025-06-23T17:01:04+00:00",
+    "name": "Leaves",
+    "author": "lennard@allosmp.de",
+    "uuid": "5da37ef6-58da-4169-90a6-e683e1721247",
+    "description": "LeavesMC improves Minecraft’s ecosystem with fast, secure and stable software available, providing quick releases and helpful support as the most maverick.",
+    "tags": [
+        "minecraft"
+    ],
+    "features": [
+        "eula",
+        "java_version",
+        "pid_limit: Limits the number of processes the server can spawn."
+    ],
+    "docker_images": {
+        "Java 21": "ghcr.io/parkervcp/yolks:java_21",
+        "Java 17": "ghcr.io/parkervcp/yolks:java_17",
+        "Java 16": "ghcr.io/parkervcp/yolks:java_16",
+        "Java 11": "ghcr.io/parkervcp/yolks:java_11",
+        "Java 8": "ghcr.io/parkervcp/yolks:java_8"
+    },
+    "file_denylist": [],
+    "startup": "java -Xms128M -XX:MaxRAMPercentage=95.0 -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
+    "config": {
+        "files": {
+            "server.properties": {
+                "parser": "properties",
+                "find": {
+                    "server-ip": "0.0.0.0",
+                    "server-port": "{{server.allocations.default.port}}",
+                    "query.port": "{{server.allocations.default.port}}"
+                }
+            }
+        },
+        "startup": {
+            "done": "Done (.*?s)! For help, type"
+        },
+        "logs": {},
+        "stop": "stop"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!/bin/ash\n# Leaves Installation Script\n#\n# Server Files: /mnt/server\nPROJECT=LeavesMC\n\nif [ -n \"${DL_PATH}\" ]; then\n\techo -e \"Using supplied download url: ${DL_PATH}\"\n\tDOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's/{{/$\\{/g' -e 's/}}/}/g')`\nelse\n\tVER_EXISTS=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT} | jq -r --arg VERSION $MINECRAFT_VERSION '.versions[] | contains($VERSION)' | grep -m1 true`\n\tLATEST_VERSION=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT} | jq -r '.versions' | jq -r '.[-1]'`\n\n\tif [ \"${VER_EXISTS}\" == \"true\" ]; then\n\t\techo -e \"Version is valid. Using version ${MINECRAFT_VERSION}\"\n\telse\n\t\techo -e \"Specified version not found. Defaulting to the latest ${PROJECT} version\"\n\t\tMINECRAFT_VERSION=${LATEST_VERSION}\n\tfi\n\n\tBUILD_EXISTS=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r --arg BUILD ${BUILD_NUMBER} '.builds[] | tostring | contains($BUILD)' | grep -m1 true`\n\tLATEST_BUILD=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r '.builds' | jq -r '.[-1]'`\n\n\tif [ \"${BUILD_EXISTS}\" == \"true\" ]; then\n\t\techo -e \"Build is valid for version ${MINECRAFT_VERSION}. Using build ${BUILD_NUMBER}\"\n\telse\n\t\techo -e \"Using the latest ${PROJECT} build for version ${MINECRAFT_VERSION}\"\n\t\tBUILD_NUMBER=${LATEST_BUILD}\n\tfi\n\n\tJAR_NAME=${PROJECT}-${MINECRAFT_VERSION}-${BUILD_NUMBER}.jar\n\n\techo \"Version being downloaded\"\n\techo -e \"MC Version: ${MINECRAFT_VERSION}\"\n\techo -e \"Build: ${BUILD_NUMBER}\"\n\techo -e \"JAR Name of Build: ${JAR_NAME}\"\n\tDOWNLOAD_URL=https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER}/downloads/${JAR_NAME}\nfi\n\ncd /mnt/server\n\nif curl -o ${SERVER_JARFILE} ${DOWNLOAD_URL}; then\n\techo -e \"Successfully downloaded ${SERVER_JARFILE}\"\nelse\n\techo -e \"Failed to download ${SERVER_JARFILE}\"\n\texit 1\nfi\n\nif [ -f ${SERVER_JARFILE} ]; then\n\tmv ${SERVER_JARFILE} ${SERVER_JARFILE}.old\nfi\n\nif [ ! -f server.properties ]; then\n    echo -e \"Downloading MC server.properties\"\n    if curl -o server.properties https://raw.githubusercontent.com/parkervcp/eggs/master/minecraft/java/server.properties; then\n        echo -e \"server.properties successfully downloaded\"\n    else\n        echo -e \"Failed to download server.properties\"\n        exit 1\n    fi\nfi",
+            "container": "ghcr.io/parkervcp/installers:alpine",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": [
+        {
+            "sort": 4,
+            "name": "Build Number",
+            "description": "The build number for the paper release. Leave at latest to always get the latest version. Invalid versions will default to latest.",
+            "env_variable": "BUILD_NUMBER",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "string",
+                "max:20"
+            ]
+        },
+        {
+            "sort": 3,
+            "name": "Download Path",
+            "description": "A URL to use to download a server.jar rather than the ones in the install script. This is not user viewable.",
+            "env_variable": "DL_PATH",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": [
+                "nullable",
+                "string"
+            ]
+        },
+        {
+            "sort": 1,
+            "name": "Minecraft Version",
+            "description": "The version of minecraft to download. Leave at latest to always get the latest version. Invalid versions will default to latest.",
+            "env_variable": "MINECRAFT_VERSION",
+            "default_value": "latest",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "nullable",
+                "string",
+                "max:20"
+            ]
+        },
+        {
+            "sort": 2,
+            "name": "Server Jar File",
+            "description": "The name of the server jarfile to run the server with.",
+            "env_variable": "SERVER_JARFILE",
+            "default_value": "server.jar",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": [
+                "required",
+                "regex:^([\\w\\d._-]+)(\\.jar)$"
+            ]
+        }
+    ]
+}
