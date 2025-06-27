@@ -1,62 +1,79 @@
 {
-    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
-    "meta": {
-        "version": "PLCN_v1",
-        "update_url": ""
+  "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
+  "meta": {
+    "version": "PLCN_v1",
+    "update_url": ""
+  },
+  "exported_at": "2025-06-27T00:00:00+00:00",
+  "name": "Leaves",
+  "author": "lennard@allosmp.de",
+  "description": "LeavesMC is a high-performance Minecraft server software.",
+  "image": "eclipse-temurin:21-jre",
+  "uuid": "5da37ef6-58da-4169-90a6-e683e1721247",
+  "tags": [
+    "minecraft",
+    "leavesmc"
+  ],
+  "docker_images": {
+    "Java 21": "eclipse-temurin:21-jre",
+    "Java 17": "eclipse-temurin:17-jre"
+  },
+  "file_denylist": [],
+  "startup": "java -Xms128M -Xmx1024M -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
+  "config": {
+    "files": {},
+    "startup": {
+      "done": ")! For help, type"
     },
-    "exported_at": "2025-06-23T17:01:04+00:00",
-    "name": "Leaves",
-    "author": "lennard@allosmp.de",
-    "description": "LeavesMC is a high-performance Minecraft server software.",
-    "image": "eclipse-temurin:21-jre",
-    "uuid": "5da37ef6-58da-4169-90a6-e683e1721247",
-    "tags": [
-        "minecraft",
-        "leavesmc"
-    ],
-    "docker_images": {
-        "Java 21": "eclipse-temurin:21-jre",
-        "Java 17": "eclipse-temurin:17-jre"
+    "logs": {
+      "custom": false,
+      "location": "logs/latest.log"
     },
-    "file_denylist": [],
-    "startup": "java -Xms128M -Xmx1024M -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
-    "config": {
-        "files": {},
-        "startup": {
-            "done": ")! For help, type"
-        },
-        "logs": {
-            "custom": false,
-            "location": "logs/latest.log"
-        },
-        "stop": "stop"
+    "stop": "stop"
+  },
+  "scripts": {
+    "installation": {
+      "script": "#!/bin/bash\n# Leaves Installation Script\n# Server Files: /mnt/server\n\napk add --no-cache curl jq\n\nif [[ -n \"${DL_PATH}\" ]]; then\n    echo -e \"Using supplied download path: ${DL_PATH}\"\n    DOWNLOAD_URL=$(eval echo \"${DL_PATH}\")\nelse\n    echo -e \"Checking for valid version...\"\n    VERSIONS=$(curl -s 'https://api.leavesmc.org/v2/projects/leaves' | jq -r '.versions[]')\n    VER_EXISTS=$(echo \"${VERSIONS}\" | grep -w \"${MINECRAFT_VERSION}\")\n    LATEST_VERSION=$(echo \"${VERSIONS}\" | tail -n 1)\n\n    if [[ -n \"${VER_EXISTS}\" ]]; then\n        echo -e \"Version ${MINECRAFT_VERSION} is valid\"\n    else\n        echo -e \"Version ${MINECRAFT_VERSION} not found, defaulting to latest: ${LATEST_VERSION}\"\n        MINECRAFT_VERSION=${LATEST_VERSION}\n    fi\n\n    echo -e \"Checking for valid build...\"\n    BUILDS=$(curl -s \"https://api.leavesmc.org/v2/projects/leaves/versions/${MINECRAFT_VERSION}\" | jq -r '.builds[]')\n    BUILD_EXISTS=$(echo \"${BUILDS}\" | grep -w \"${BUILD_NUMBER}\")\n    LATEST_BUILD=$(echo \"${BUILDS}\" | tail -n 1)\n\n    if [[ -n \"${BUILD_EXISTS}\" ]]; then\n        echo -e \"Build ${BUILD_NUMBER} is valid for version ${MINECRAFT_VERSION}\"\n    else\n        echo -e \"Build ${BUILD_NUMBER} not found, defaulting to latest: ${LATEST_BUILD}\"\n        BUILD_NUMBER=${LATEST_BUILD}\n    fi\n\n    DOWNLOAD_URL=\"https://api.leavesmc.org/v2/projects/leaves/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER}/downloads/application\"\nfi\n\ncurl -o server.jar \"${DOWNLOAD_URL}\"\n\nmv server.jar ${SERVER_JARFILE}",
+      "container": "alpine:latest",
+      "entrypoint": "bash"
+    }
+  },
+  "variables": [
+    {
+      "name": "Minecraft Version",
+      "description": "The Minecraft version to install.",
+      "env_variable": "MINECRAFT_VERSION",
+      "default_value": "1.20.6",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string"
     },
-    "scripts": {
-        "installation": {
-            "script": "#!/bin/bash\n# Leaves Installation Script\n# Server Files: /mnt/server\n\napk add --no-cache curl jq\n\nif [[ -n \"${DL_PATH}\" ]]; then\n    echo -e \"Using supplied download path: ${DL_PATH}\"\n    DOWNLOAD_URL=$(eval echo \"${DL_PATH}\")\nelse\n    echo -e \"Checking for valid version...\"\n    VERSIONS=$(curl -s 'https://api.leavesmc.org/v2/projects/leaves' | jq -r '.versions[]')\n    VER_EXISTS=$(echo \"${VERSIONS}\" | grep -w \"${MINECRAFT_VERSION}\")\n    LATEST_VERSION=$(echo \"${VERSIONS}\" | tail -n 1)\n\n    if [[ -n \"${VER_EXISTS}\" ]]; then\n        echo -e \"Version ${MINECRAFT_VERSION} is valid\"\n    else\n        echo -e \"Version ${MINECRAFT_VERSION} not found, defaulting to latest: ${LATEST_VERSION}\"\n        MINECRAFT_VERSION=${LATEST_VERSION}\n    fi\n\n    echo -e \"Checking for valid build...\"\n    BUILDS=$(curl -s \"https://api.leavesmc.org/v2/projects/leaves/versions/${MINECRAFT_VERSION}\" | jq -r '.builds[]')\n    BUILD_EXISTS=$(echo \"${BUILDS}\" | grep -w \"${BUILD_NUMBER}\")\n    LATEST_BUILD=$(echo \"${BUILDS}\" | tail -n 1)\n\n    if [[ -n \"${BUILD_EXISTS}\" ]]; then\n        echo -e \"Build ${BUILD_NUMBER} is valid for version ${MINEC startup": {
-            "done": ")! For help, type"
-        },
-        "logs": {
-            "custom": false,
-            "location": "logs/latest.log"
-        },
-        "stop": "stop"
+    {
+      "name": "Build Number",
+      "description": "The build number to install.",
+      "env_variable": "BUILD_NUMBER",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string"
     },
-    "scripts": {
-        "installation": {
-            "script": "#!/bin/bash\n# Leaves Installation Script\n# Server Files: /mnt/server\n\napk add --no-cache curl jq\n\nif [[ -n \"${DL_PATH}\" ]]; then\n    echo -e \"Using supplied download path: ${DL_PATH}\"\n    DOWNLOAD_URL=$(eval echo \"${DL_PATH}\")\nelse\n    echo -e \"Checking for valid version...\"\n    VERSIONS=$(curl -s 'https://api.leavesmc.org/v2/projects/leaves' | jq -r '.versions[]')\n    VER_EXISTS=$(echo \"${VERSIONS}\" | grep -w \"${MINECRAFT_VERSION}\")\n    LATEST_VERSION=$(echo \"${VERSIONS}\" | tail -n 1)\n\n    if [[ -n \"${VER_EXISTS}\" ]]; then\n        echo -e \"Version ${MINECRAFT_VERSION} is valid\"\n    else\n        echo -e \"Version ${MINECRAFT_VERSION} not found, defaulting to latest: ${LATEST_VERSION}\"\n        MINECRAFT_VERSION=${LATEST_VERSION}\n    fi\n\n    echo -e \"Checking for valid build...\"\n    BUILDS=$(curlAndere Egg-Elemente (wie `features` oder komplexe Regex-Regeln) wurden entfernt, da sie in der minimalen Version nicht vorhanden waren und möglicherweise Inkompatibilitäten verursachen.
-- **Startup-Befehl**: Vereinfacht mit festem `-Xmx1024M` statt `{{SERVER_MEMORY}}`, um Platzhalter-Probleme zu vermeiden.
-- **Config**: Entfernung der `config.files`-Sektion, um Parsing-Probleme zu vermeiden; `server.properties` wird im Installationsskript erstellt.
-- **Installation Script**: Angepasst an die korrekte API-URL (`https://api.leavesmc.org/v2/projects/leaves`), inspiriert von `egg-paper.json`, mit robuster Fehlerbehandlung.
-- **Docker Images**: Beibehaltung von `eclipse-temurin:21-jre` und `eclipse-temurin:17-jre` für Kompatibilität.
-- **Entrypoint**: Verwendung von `bash` wie in `egg-paper.json`.
-
-### Anweisungen zum Testen
-1. **Speichere die Datei**:
-   - Kopiere die obige JSON-Datei in eine Datei namens `egg-Leaves-situationsbedingt ist, liegt der Fehler wahrscheinlich an einer Inkompatibilität mit deiner Pterodactyl-Version oder einem Parsing-Bug im Panel. Hier sind die Schritte, um das Problem weiter einzugrenzen und zu beheben:
-
-1. **Speichere die Datei**:
-   - Kopiere die obige JSON-Datei in eine Datei namens `egg-LeavesMC.json`.
-   - Stelle sicher, dass sie in UTF-8 ohne BOM gespeichert ist:
-     ```bash
-     file egg-LeavesMC.json
+    {
+      "name": "Custom Download URL",
+      "description": "Direct .jar download URL (overrides version/build).",
+      "env_variable": "DL_PATH",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string"
+    },
+    {
+      "name": "Server Jar File",
+      "description": "The name of the server jarfile to run.",
+      "env_variable": "SERVER_JARFILE",
+      "default_value": "server.jar",
+      "user_viewable": false,
+      "user_editable": false,
+      "rules": "required|string"
+    }
+  ]
+}
