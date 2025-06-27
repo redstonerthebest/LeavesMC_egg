@@ -2,17 +2,18 @@
     "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PANEL",
     "meta": {
         "version": "PLCN_v1",
-        "update_url"
+        "update_url": ""
     },
     "exported_at": "2025-06-23T17:01:04+00:00",
     "name": "Leaves",
     "author": "lennard@allosmp.de",
+    "description": "LeavesMC is a high-performance Minecraft server software, providing fast, secure, and stable operation with quick releases and dedicated support.",
+    "image": "eclipse-temurin:21-jre",
     "uuid": "5da37ef6-58da-4169-90a6-e683e1721247",
-    "description": "LeavesMC Minecraft server software",
     "tags": [
-        "minecraft"
+        "minecraft",
+        "leavesmc"
     ],
-    "features": [],
     "docker_images": {
         "Java 21": "eclipse-temurin:21-jre",
         "Java 17": "eclipse-temurin:17-jre"
@@ -25,79 +26,63 @@
                 "parser": "properties",
                 "find": {
                     "server-ip": "0.0.0.0",
-                    "server-port": "{{server.allocations.default.port}}",
-                    "query.port": "{{server.allocations.default.port}}"
+                    "server-port": "{{server.build.default.port}}",
+                    "query.port": "{{server.build.default.port}}"
                 }
             }
         },
         "startup": {
-            "done": "Done"
+            "done": ")! For help, type"
         },
-        "logs": {},
+        "logs": {
+            "custom": false,
+            "location": "logs/latest.log"
+        },
         "stop": "stop"
     },
     "scripts": {
         "installation": {
-            "script": "#!/bin/ash\n# Leaves Installation Script\n# Server Files: /mnt/server\nPROJECT=LeavesMC\n\n# Installieren von Abhängigkeiten\napk add --no-cache jq curl\nif [ $? -ne 0 ]; then\n    echo -e \"Fehler: Konnte Abhängigkeiten nicht installieren.\"\n    exit 1\nfi\n\n# Überprüfen, ob die API erreichbar ist\nAPI_URL=\"https://api.leavesmc.org/v2/projects/${PROJECT}\"\nif ! curl -s -f \"${API_URL}\" >/dev/null; then\n    echo -e \"Fehler: API unter ${API_URL} ist nicht erreichbar.\"\n    exit 1\nfi\n\nif [ -n \"${DL_PATH}\" ]; then\n    echo -e \"Using supplied download url: ${DL_PATH}\"\n    DOWNLOAD_URL=`eval echo $(echo ${DL_PATH} | sed -e 's/{{/$\\{/g' -e 's/}}/}/g')`\nelse\n    VER_EXISTS=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT} | jq -r --arg VERSION $MINECRAFT_VERSION '.versions[] | contains($VERSION)' | grep -m1 true`\n    LATEST_VERSION=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT} | jq -r '.versions' | jq -r '.[-1]'`\n\n    if [ \"${VER_EXISTS}\" == \"true\" ]; then\n        echo -e \"Version is valid. Using version ${MINECRAFT_VERSION}\"\n    else\n        echo -e \"Specified version not found. Defaulting to the latest ${PROJECT} version\"\n        MINECRAFT_VERSION=${LATEST_VERSION}\n    fi\n\n    BUILD_EXISTS=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r --arg BUILD ${BUILD_NUMBER} '.builds[] | tostring | contains($BUILD)' | grep -m1 true`\n    LATEST_BUILD=`curl -s https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION} | jq -r '.builds' | jq -r '.[-1]'`\n\n    if [ \"${BUILD_EXISTS}\" == \"true\" ]; then\n        echo -e \"Build is valid for version ${MINECRAFT_VERSION}. Using build ${BUILD_NUMBER}\"\n    else\n        echo -e \"Using the latest ${PROJECT} build for version ${MINECRAFT_VERSION}\"\n        BUILD_NUMBER=${LATEST_BUILD}\n    fi\n\n    JAR_NAME=${PROJECT}-${MINECRAFT_VERSION}-${BUILD_NUMBER}.jar\n    DOWNLOAD_URL=https://api.leavesmc.org/v2/projects/${PROJECT}/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER}/downloads/${JAR_NAME}\nfi\n\ncd /mnt/server\n\n# Server-JAR herunterladen und validieren\nif curl -s -o ${SERVER_JARFILE} ${DOWNLOAD_URL} && [ -s ${SERVER_JARFILE} ]; then\n    echo -e \"Successfully downloaded ${SERVER_JARFILE}\"\nelse\n    echo -e \"Fehler: Konnte ${SERVER_JARFILE} nicht herunterladen oder Datei ist leer\"\n    exit 1\nfi\n\n# Alte JAR-Datei sichern\nif [ -f ${SERVER_JARFILE} ]; then\n    mv ${SERVER_JARFILE} ${SERVER_JARFILE}.old\nfi\n\n# Server.properties herunterladen, falls nicht vorhanden\nif [ ! -f server.properties ]; then\n    echo -e \"Downloading MC server.properties\"\n    PROP_URL=\"https://raw.githubusercontent.com/parkervcp/eggs/master/minecraft/java/server.properties\"\n    if ! curl -s -f -o server.properties ${PROP_URL} || [ ! -s server.properties ]; then\n        echo -e \"Warnung: Konnte server.properties nicht herunterladen. Erstelle eine Standard-Datei.\"\n        cat <<EOT > server.properties\n#Minecraft server properties\nserver-port={{server.allocations.default.port}}\nserver-ip=0.0.0.0\nEOT\n    else\n        echo -e \"server.properties successfully downloaded\"\n    fi\nfi",
+            "script": "#!/bin/bash\n# Leaves Installation Script\n# Server Files: /mnt/server\n\napk add --no-cache curl jq\n\nif [[ -n \"${DL_PATH}\" ]]; then\n    echo -e \"Using supplied download path: ${DL_PATH}\"\n    DOWNLOAD_URL=$(eval echo \"${DL_PATH}\")\nelse\n    echo -e \"Checking for valid version...\"\n    VERSIONS=$(curl -s 'https://api.leavesmc.org/v2/projects/LeavesMC' | jq -r '.versions[]')\n    VER_EXISTS=$(echo \"${VERSIONS}\" | grep -w \"${MINECRAFT_VERSION}\")\n    LATEST_VERSION=$(echo \"${VERSIONS}\" | tail -n 1)\n\n    if [[ -n \"${VER_EXISTS}\" ]]; then\n        echo -e \"Version ${MINECRAFT_VERSION} is valid\"\n    else\n        echo -e \"Version ${MINECRAFT_VERSION} not found, defaulting to latest: ${LATEST_VERSION}\"\n        MINECRAFT_VERSION=${LATEST_VERSION}\n    fi\n\n    echo -e \"Checking for valid build...\"\n    BUILDS=$(curl -s \"https://api.leavesmc.org/v2/projects/LeavesMC/versions/${MINECRAFT_VERSION}\" | jq -r '.builds[]')\n    BUILD_EXISTS=$(echo \"${BUILDS}\" | grep -w \"${BUILD_NUMBER}\")\n    LATEST_BUILD=$(echo \"${BUILDS}\" | tail -n 1)\n\n    if [[ -n \"${BUILD_EXISTS}\" ]]; then\n        echo -e \"Build ${BUILD_NUMBER} is valid for version ${MINECRAFT_VERSION}\"\n    else\n        echo -e \"Build ${BUILD_NUMBER} not found, defaulting to latest: ${LATEST_BUILD}\"\n        BUILD_NUMBER=${LATEST_BUILD}\n    fi\n\n    JAR_NAME=LeavesMC-${MINECRAFT_VERSION}-${BUILD_NUMBER}.jar\n    DOWNLOAD_URL=\"https://api.leavesmc.org/v2/projects/LeavesMC/versions/${MINECRAFT_VERSION}/builds/${BUILD_NUMBER}/downloads/${JAR_NAME}\"\nfi\n\ncd /mnt/server\n\necho -e \"Downloading LeavesMC version ${MINECRAFT_VERSION} build ${BUILD_NUMBER}...\"\nif curl -sSfLo \"${SERVER_JARFILE}\" \"${DOWNLOAD_URL}\"; then\n    echo -e \"Successfully downloaded ${SERVER_JARFILE}\"\nelse\n    echo -e \"Failed to download ${SERVER_JARFILE}\"\n    exit 1\nfi\n\nif [[ -f \"${SERVER_JARFILE}\" && ! -f server.jar ]]; then\n    mv \"${SERVER_JARFILE}\" server.jar\nfi\n\nif [[ ! -f server.properties ]]; then\n    echo -e \"Downloading default server.properties...\"\n    if ! curl -sSfLo server.properties 'https://raw.githubusercontent.com/parkervcp/eggs/master/game_eggs/minecraft/java/server.properties'; then\n        echo -e \"Failed to download server.properties, creating minimal version\"\n        echo -e \"#Minecraft server properties\nserver-port={{server.build.default.port}}\nserver-ip=0.0.0.0\" > server.properties\n    fi\nfi",
             "container": "eclipse-temurin:21-jre",
-            "entrypoint": "ash"
+            "entrypoint": "bash"
         }
     },
     "variables": [
         {
-            "sort": 1,
             "name": "Minecraft Version",
-            "description": "The version of Minecraft to download. Leave at latest to always get the latest version.",
+            "description": "Minecraft version to install. Use 'latest' for the latest version.",
             "env_variable": "MINECRAFT_VERSION",
             "default_value": "latest",
             "user_viewable": true,
             "user_editable": true,
-            "rules": [
-                "required",
-                "string",
-                "max:20"
-            ]
+            "rules": "required|string|max:20"
         },
         {
-            "sort": 2,
-            "name": "Server Jar File",
-            "description": "The name of the server jarfile to run the server with.",
-            "env_variable": "SERVER_JARFILE",
-            "default_value": "server.jar",
-            "user_viewable": true,
-            "user_editable": true,
-            "rules": [
-                "required",
-                "string",
-                "max:100"
-            ]
-        },
-        {
-            "sort": 3,
-            "name": "Download Path",
-            "description": "A URL to use to download a server.jar rather than the ones in the install script. Leave empty to use default download.",
-            "env_variable": "DL_PATH",
-            "default_value": "",
-            "user_viewable": false,
-            "user_editable": false,
-            "rules": [
-                "optional",
-                "string"
-            ]
-        },
-        {
-            "sort": 4,
             "name": "Build Number",
-            "description": "The build number for the paper release. Leave at latest to always get the latest version.",
+            "description": "Build number for the LeavesMC release. Use 'latest' for the latest build.",
             "env_variable": "BUILD_NUMBER",
             "default_value": "latest",
             "user_viewable": true,
             "user_editable": true,
-            "rules": [
-                "required",
-                "string",
-                "max:20"
-            ]
+            "rules": "required|string|max:20"
+        },
+        {
+            "name": "Server Jar File",
+            "description": "Name of the server JAR file.",
+            "env_variable": "SERVER_JARFILE",
+            "default_value": "server.jar",
+            "user_viewable": true,
+            "user_editable": true,
+            "rules": "required|string|max:100"
+        },
+        {
+            "name": "Download Path",
+            "description": "Optional URL to download the server JAR file (overrides default download).",
+            "env_variable": "DL_PATH",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "nullable|string"
         }
     ]
 }
