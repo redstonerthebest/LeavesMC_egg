@@ -15,8 +15,12 @@
     "leavesmc"
   ],
   "docker_images": {
-    "Java 21": "eclipse-temurin:21-jre",
-    "Java 17": "eclipse-temurin:17-jre"
+        "Java 8": "ghcr.io\/pterodactyl\/yolks:java_8",
+        "Java 11": "ghcr.io\/pterodactyl\/yolks:java_11",
+        "Java 16": "ghcr.io\/pterodactyl\/yolks:java_16",
+        "Java 17": "ghcr.io\/pterodactyl\/yolks:java_17",
+        "Java 18": "ghcr.io\/pterodactyl\/yolks:java_18",
+        "Java 21": "ghcr.io\/pterodactyl\/yolks:java_21"
   },
   "file_denylist": [],
   "startup": "java -Xms128M -Xmx1024M -Dterminal.jline=false -Dterminal.ansi=true -jar {{SERVER_JARFILE}}",
