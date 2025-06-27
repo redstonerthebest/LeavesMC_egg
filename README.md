@@ -25,7 +25,7 @@ This egg supports the following Java versions via Docker images:
 
 ## Installation
 
-This egg is compatible with [Pelican Panel](https://pelican-panel.com). To use it:
+This egg is compatible with [Pelican Panel](https://pelican.dev/). To use it:
 
 1. Upload the `egg-leaves-m-c.json` file in your panel’s admin area.
 2. Create a new server using the LeavesMC egg.
